@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSP · Tema 2: Programación Multihilo y Concurrencia en Java</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { background-color: #f8fafc; color: #1e293b; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    pre[class*="language-"] { border-radius: 0.75rem; margin: 0.75rem 0; font-size: 0.86rem; line-height: 1.5; border: 1px solid #334155; }
+    details > summary { list-style: none; cursor: pointer; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] summary .arrow { transform: rotate(90deg); }
+    .arrow { transition: transform 0.2s ease; display: inline-block; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Barra de navegación conectada con tema1.html -->
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs tracking-wide uppercase">DAM 2 · PSP</span>
+        <h1 class="font-bold text-slate-800 text-base sm:text-lg">Cuaderno Práctico de Examen</h1>
+      </div>
+      <nav class="flex items-center gap-2 text-sm font-medium">
+        <a href="tema1.html" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          ← Tema 1: Procesos
+        </a>
+        <a href="tema2.html" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm">
+          Tema 2: Hilos y Concurrencia
+        </a>
+        <a href="teoria.html" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white shadow-sm">
+          Teoría Temas 1 y 2
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Sub-navegación rápida de secciones -->
+  <div class="bg-indigo-50/70 border-b border-indigo-100">
+    <div class="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap gap-2 text-xs sm:text-sm font-medium text-indigo-900">
+      <span class="text-indigo-500 font-semibold py-1">Ir a:</span>
+      <a href="#metodo" class="px-2.5 py-1 rounded-md hover:bg-indigo-100 transition">1. Método Mental (4 Pasos)</a>
+      <a href="#hilos" class="px-2.5 py-1 rounded-md hover:bg-indigo-100 transition">2. Hilos, Ciclo de Vida y join()</a>
+      <a href="#synchronized" class="px-2.5 py-1 rounded-md hover:bg-indigo-100 transition">3. synchronized + wait/notifyAll</a>
+      <a href="#semaphore" class="px-2.5 py-1 rounded-md hover:bg-indigo-100 transition">4. Semaphore (Binario y Contador)</a>
+      <a href="#reentrantlock" class="px-2.5 py-1 rounded-md hover:bg-indigo-100 transition">5. ReentrantLock, tryLock y Condition</a>
+      <a href="#deadlocks" class="px-2.5 py-1 rounded-md hover:bg-indigo-100 transition">6. Deadlocks y Checklist</a>
+    </div>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-10 flex-1">
+
+    <!-- Cabecera Hero -->
+    <section class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-6 sm:p-8 text-white shadow-md">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <p class="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">Bloque II · Programación Concurrente</p>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Tema 2: Hilos, Sincronización y Comunicación en Java</h2>
+          <p class="mt-2 text-indigo-100 text-sm sm:text-base max-w-2xl">
+            Guía paso a paso para plantear problemas de examen, elegir el mecanismo adecuado (<code>synchronized</code>, <code>Semaphore</code>, <code>ReentrantLock</code>), evitar condiciones de carrera y romper <em>Deadlocks</em>.
+          </p>
+        </div>
+        <div class="bg-white/15 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-xs space-y-1.5 shrink-0">
+          <div class="font-bold text-white uppercase tracking-wide">Regla de Oro de Concurrencia</div>
+          <p class="text-indigo-100">1. Separa <strong>Actores</strong> (<code>Runnable</code>) de <strong>Recursos</strong> (Monitores).</p>
+          <p class="text-indigo-100">2. <code>wait()</code> / <code>await()</code> <strong>SIEMPRE</strong> dentro de <code>while</code>.</p>
+          <p class="text-indigo-100">3. <code>unlock()</code> / <code>release()</code> <strong>SIEMPRE</strong> en <code>finally</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 1: MÉTODO MENTAL -->
+    <section id="metodo" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Paso 0 · Antes de escribir una línea</span>
+        <h3 class="text-xl font-bold text-slate-800">Cómo plantear cualquier ejercicio de hilos en 4 preguntas</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-4 rounded-xl bg-sky-50 border border-sky-200 space-y-2">
+          <div class="w-7 h-7 rounded-lg bg-sky-600 text-white font-bold flex items-center justify-center text-sm">1</div>
+          <h4 class="font-bold text-sky-950 text-sm">Identifica Actores vs. Recursos</h4>
+          <p class="text-xs text-sky-900 leading-relaxed">
+            <strong>Actores (Hilos):</strong> Quienes ejecutan acciones (<code>Robot</code>, <code>Cliente</code>, <code>Filosofo</code>). Implementan <code>Runnable</code>.<br/>
+            <strong>Recursos (Pasivos):</strong> Objetos compartidos que guardan datos (<code>Cuenta</code>, <code>Cinta</code>, <code>Central</code>). No son hilos.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+          <div class="w-7 h-7 rounded-lg bg-amber-600 text-white font-bold flex items-center justify-center text-sm">2</div>
+          <h4 class="font-bold text-amber-950 text-sm">Detecta la Sección Crítica</h4>
+          <p class="text-xs text-amber-900 leading-relaxed">
+            ¿Qué variable o array leen y modifican varios hilos a la vez? (ej. <code>saldo</code>, <code>contador++</code>, <code>estaciones[]</code>). Ese trozo de código debe ejecutarse en <strong>exclusión mutua</strong> para evitar <em>Race Conditions</em>.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">3</div>
+          <h4 class="font-bold text-emerald-950 text-sm">Elige la Herramienta</h4>
+          <p class="text-xs text-emerald-900 leading-relaxed">
+            • <strong>1 en 1 simple:</strong> <code>synchronized</code>.<br/>
+            • <strong>Aforo de N plazas:</strong> <code>Semaphore(N)</code>.<br/>
+            • <strong>Esperar condición (lleno/vacío):</strong> <code>wait()/notifyAll()</code> o <code>ReentrantLock + Condition</code>.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-violet-50 border border-violet-200 space-y-2">
+          <div class="w-7 h-7 rounded-lg bg-violet-600 text-white font-bold flex items-center justify-center text-sm">4</div>
+          <h4 class="font-bold text-violet-950 text-sm">Orquesta en el Main</h4>
+          <p class="text-xs text-violet-900 leading-relaxed">
+            1. Crea <strong>una única instancia</strong> del recurso compartido.<br/>
+            2. Pásala por constructor a todos los hilos.<br/>
+            3. Arranca con <code>.start()</code> y espera al final con <code>.join()</code>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tabla comparativa rápida -->
+      <div class="overflow-x-auto pt-2">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+              <th class="p-3 font-bold">Mecanismo</th>
+              <th class="p-3 font-bold">¿Cuándo usarlo en el examen?</th>
+              <th class="p-3 font-bold">Liberación</th>
+              <th class="p-3 font-bold">Salas de espera</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr>
+              <td class="p-3 font-semibold text-indigo-700"><code>synchronized</code> + <code>wait/notifyAll</code></td>
+              <td class="p-3">Exclusión mutua básica (1 hilo) o pausar/reanudar hilos bajo una condición booleana (ej. alerta).</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-medium">Automática</span></td>
+              <td class="p-3">1 única cola por objeto</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-indigo-700"><code>Semaphore(1)</code> (Mutex)</td>
+              <td class="p-3">Igual que <code>synchronized</code> (1 hilo a la vez), cuando piden un semáforo binario explícito.</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-xs font-medium">Manual (finally)</span></td>
+              <td class="p-3">Cola de permisos</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-indigo-700"><code>Semaphore(N)</code> (Contador)</td>
+              <td class="p-3">Controlar el aforo máximo de <strong>N plazas idénticas</strong> (3 estaciones, 4 cajas, 5 conexiones).</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-xs font-medium">Manual (finally)</span></td>
+              <td class="p-3">Cola de permisos</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold text-indigo-700"><code>ReentrantLock</code> + <code>Condition</code></td>
+              <td class="p-3">Productor-Consumidor con 2 colas separadas (lleno/vacío), colas de prioridad o intentos sin bloqueo (<code>tryLock</code>).</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-xs font-medium">Manual (finally)</span></td>
+              <td class="p-3"><strong>Múltiples</strong> (<code>newCondition</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: HILOS Y CICLO DE VIDA -->
+    <section id="hilos" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Fundamentos</span>
+        <h3 class="text-xl font-bold text-slate-800">2. Creación de Hilos (<code>Runnable</code>), Ciclo de Vida y Métodos Base</h3>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-800 text-sm">Estructura Estándar (Implementando <code>Runnable</code>)</h4>
+          <p class="text-xs text-slate-600">
+            Es la forma recomendada frente a <code>extends Thread</code> porque separa la tarea del hilo y permite heredar de otra clase.
+          </p>
+          <pre><code class="language-java">// 1. Clase Tarea (Actor)
+public class Trabajador implements Runnable {
+    private final RecursoCompartido recurso; // Referencia compartida
+
+    public Trabajador(RecursoCompartido recurso) {
+        this.recurso = recurso;
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                recurso.hacerTrabajo();
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException e) {
+            // Salida limpia cuando Main llama a interrupt()
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+// 2. En el Main
+RecursoCompartido recurso = new RecursoCompartido();
+Thread h1 = new Thread(new Trabajador(recurso), "Hilo-1");
+h1.start(); // ¡SIEMPRE start(), NUNCA run()!
+h1.join();  // Main espera a que h1 termine</code></pre>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-800 text-sm">Diccionario de Métodos de <code>Thread</code></h4>
+          <div class="space-y-2.5 text-xs">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="font-bold text-indigo-700"><code>t.start()</code></div>
+              <p class="text-slate-600 mt-0.5">Crea un nuevo hilo real en el SO y llama a <code>run()</code> en paralelo. Si llamas a <code>t.run()</code> directamente, se ejecuta secuencialmente en el hilo <code>main</code> (error grave de examen).</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="font-bold text-indigo-700"><code>t.join()</code></div>
+              <p class="text-slate-600 mt-0.5">El hilo que llama (normalmente <code>main</code>) se queda bloqueado esperando hasta que el hilo <code>t</code> muera. Imprescindible antes de imprimir totales finales.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="font-bold text-indigo-700"><code>Thread.sleep(ms)</code></div>
+              <p class="text-slate-600 mt-0.5">Duerme al hilo actual durante <code>ms</code> milisegundos (estado <code>TIMED_WAITING</code>). <strong>No libera candados</strong> si los tenía cogidos.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="font-bold text-indigo-700"><code>t.interrupt()</code> &amp; <code>isInterrupted()</code></div>
+              <p class="text-slate-600 mt-0.5">Envía una señal de parada al hilo <code>t</code>. Si está en <code>sleep()</code>, <code>wait()</code> o <code>acquire()</code>, lanza <code>InterruptedException</code> permitiendo un cierre limpio.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="font-bold text-indigo-700"><code>t.setDaemon(true)</code></div>
+              <p class="text-slate-600 mt-0.5">Marca el hilo como demonio (segundo plano, ej. sensor o log). Se debe llamar <strong>antes</strong> de <code>start()</code>. Cuando acaban los hilos normales, la JVM mata los demonios automáticamente.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="font-bold text-indigo-700">Palabra clave <code>volatile</code></div>
+              <p class="text-slate-600 mt-0.5">Obliga a leer y escribir una variable directamente desde la memoria RAM principal y no desde la caché de la CPU (ideal para flags <code>boolean</code> o estados leídos por un Dashboard).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 3: SYNCHRONIZED + WAIT / NOTIFYALL -->
+    <section id="synchronized" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Monitores Nativos de Java</span>
+        <h3 class="text-xl font-bold text-slate-800">3. <code>synchronized</code>, <code>wait()</code>, <code>notify()</code> y <code>notifyAll()</code></h3>
+      </div>
+
+      <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-200 text-xs sm:text-sm text-indigo-950 space-y-1">
+        <p class="font-bold">💡 ¿Cómo razonarlo?</p>
+        <p>Todo objeto en Java tiene un candado intrínseco (monitor). Al poner <code>synchronized</code> en un método o bloque, solo un hilo puede poseer la llave de ese objeto a la vez. Si además necesita esperar a que otro hilo cambie un estado, usa <code>wait()</code> para soltar la llave y dormirse sin gastar CPU.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="font-bold text-indigo-700 text-sm"><code>wait()</code></div>
+          <p class="text-slate-600 mt-1">1. <strong>Suelta el candado</strong> del monitor.<br/>2. Pone el hilo a dormir (<code>WAITING</code>).<br/>3. Al despertar, recupera el candado antes de seguir. <em>Solo puede llamarse dentro de un bloque <code>synchronized</code>.</em></p>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="font-bold text-indigo-700 text-sm"><code>notify()</code></div>
+          <p class="text-slate-600 mt-1">Despierta a <strong>un único hilo</strong> elegido al azar entre los que estaban dormidos en el <code>wait()</code> de ese objeto. Peligroso si hay varios tipos de hilos esperando.</p>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="font-bold text-indigo-700 text-sm"><code>notifyAll()</code></div>
+          <p class="text-slate-600 mt-1">Despierta a <strong>TODOS los hilos</strong> dormidos en ese objeto. Cada uno volverá a comprobar su bucle <code>while</code> de uno en uno. <strong>Es la opción más segura en exámenes.</strong></p>
+        </div>
+      </div>
+
+      <!-- Desplegable Ejemplo Real: SupervisorCentral -->
+      <details class="border border-slate-200 rounded-xl overflow-hidden" open>
+        <summary class="bg-slate-100 hover:bg-slate-200/70 px-4 py-3 font-bold text-slate-800 text-sm flex items-center justify-between transition">
+          <span><span class="arrow mr-2">▶</span> Ejemplo Real: Parada de Emergencia (Patrón <code>SupervisorCentral</code>)</span>
+          <span class="text-xs font-normal text-slate-500">while + wait() + notifyAll()</span>
+        </summary>
+        <div class="p-4 bg-white space-y-3">
+          <p class="text-xs text-slate-600">
+            <strong>Por qué <code>while</code> y no <code>if</code>:</strong> Por los <em>spurious wakeups</em> (despertares espontáneos del SO). Si un hilo se despierta por error, el <code>while</code> le obliga a re-comprobar si <code>alertaActiva</code> sigue siendo <code>true</code> antes de continuar.
+          </p>
+          <pre><code class="language-java">public class SupervisorCentral {
+    private boolean alertaActiva = false;
+
+    // Los trabajadores llaman a este método antes de operar
+    public synchronized void verificarEstado() throws InterruptedException {
+        while (alertaActiva) {
+            wait(); // Suelta el monitor y se duerme hasta recibir notifyAll()
+        }
+    }
+
+    // Activa la emergencia (los siguientes hilos que verifiquen quedarán pausados)
+    public synchronized void activarAlerta() {
+        this.alertaActiva = true;
+    }
+
+    // Desactiva la emergencia y despierta a TODOS los hilos pausados a la vez
+    public synchronized void desactivarAlerta() {
+        this.alertaActiva = false;
+        notifyAll(); // Si usáramos notify(), solo despertaría a 1 robot y los demás quedarían colgados
+    }
+}</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- SECCIÓN 4: SEMAPHORE -->
+    <section id="semaphore" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">java.util.concurrent.Semaphore</span>
+        <h3 class="text-xl font-bold text-slate-800">4. <code>Semaphore</code>: Binario (Mutex) y Contador (Aforo N)</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-teal-50 border border-teal-200 space-y-1.5">
+          <h4 class="font-bold text-teal-950 text-sm">Constructores de <code>Semaphore</code></h4>
+          <p class="text-teal-900">• <code>new Semaphore(1)</code> → <strong>Mutex / Binario:</strong> Solo 1 hilo pasa a la vez (exclusión mutua estricta).</p>
+          <p class="text-teal-900">• <code>new Semaphore(N)</code> → <strong>Contador:</strong> Permite entrar hasta <strong>N hilos simultáneamente</strong> (ej. 3 estaciones de soldadura).</p>
+          <p class="text-teal-900">• <code>new Semaphore(N, true)</code> → <strong>Justo (Fair):</strong> Respeta el orden FIFO de llegada (el que más lleva esperando entra primero).</p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <h4 class="font-bold text-slate-800 text-sm">Métodos Principales</h4>
+          <p class="text-slate-700">• <code>acquire()</code>: Pide 1 permiso. Si <code>permisos &gt; 0</code>, resta 1 y entra. Si es <code>0</code>, bloquea al hilo hasta que alguien libere.</p>
+          <p class="text-slate-700">• <code>release()</code>: Devuelve 1 permiso (suma 1) y despierta a un hilo en espera. <strong>¡Siempre en <code>finally</code>!</strong></p>
+          <p class="text-slate-700">• <code>tryAcquire()</code>: Intenta coger permiso sin esperar. Devuelve <code>true</code> si pudo, o <code>false</code> al instante si está lleno.</p>
+          <p class="text-slate-700">• <code>availablePermits()</code>: Devuelve cuántos permisos quedan libres actualmente.</p>
+        </div>
+      </div>
+
+      <!-- Desplegable Ejemplo Real: CentralSoldadura base -->
+      <details class="border border-slate-200 rounded-xl overflow-hidden" open>
+        <summary class="bg-slate-100 hover:bg-slate-200/70 px-4 py-3 font-bold text-slate-800 text-sm flex items-center justify-between transition">
+          <span><span class="arrow mr-2">▶</span> Ejemplo Real: Control de Aforo + Array Protegido + Mutex</span>
+          <span class="text-xs font-normal text-slate-500">Semaphore(N) + Semaphore(1)</span>
+        </summary>
+        <div class="p-4 bg-white space-y-3">
+          <p class="text-xs text-slate-600">
+            <strong>Trampa clásica de examen:</strong> Un <code>Semaphore(3)</code> limita <em>cuántos</em> entran (3), pero si además necesitas asignar <em>qué índice exacto</em> del array (0, 1 o 2) ocupa cada hilo, debes proteger la búsqueda en el array con <code>synchronized</code> para que dos hilos no cojan el índice 0 a la vez.
+          </p>
+          <pre><code class="language-java">import java.util.concurrent.Semaphore;
+
+public class CentralSoldadura {
+    // 1. Semáforo CONTADOR: permite 3 robots soldando en paralelo
+    private final Semaphore semaforoEstaciones = new Semaphore(3);
+    private final boolean[] estacionesOcupadas = new boolean[3];
+
+    // 2. Semáforo BINARIO (Mutex): solo 1 robot firma en el tablero a la vez
+    private final Semaphore mutexRegistro = new Semaphore(1);
+    private int cochesRegistrados = 0;
+
+    public int entrarEstacion() throws InterruptedException {
+        semaforoEstaciones.acquire(); // Pide plaza (si hay 3 dentro, espera aquí)
+        return asignarIndiceLibre();  // Busca qué plaza física (0, 1 ó 2) está libre
+    }
+
+    private synchronized int asignarIndiceLibre() {
+        for (int i = 0; i < estacionesOcupadas.length; i++) {
+            if (!estacionesOcupadas[i]) {
+                estacionesOcupadas[i] = true;
+                return i;
+            }
+        }
+        return -1; // Obligatorio para que compile Java (nunca ocurre gracias al Semaphore)
+    }
+
+    public void salirEstacion(int numEstacion) {
+        liberarIndice(numEstacion);     // 1º Marcamos el array como libre
+        semaforoEstaciones.release();   // 2º Devolvemos el permiso al semáforo
+    }
+
+    private synchronized void liberarIndice(int numEstacion) {
+        estacionesOcupadas[numEstacion] = false;
+    }
+
+    public void firmarCertificado() throws InterruptedException {
+        mutexRegistro.acquire(); // Exclusión mutua de 1 en 1
+        try {
+            cochesRegistrados++;
+            Thread.sleep(200);
+        } finally {
+            mutexRegistro.release(); // Pase lo que pase, liberamos el mutex
+        }
+    }
+}</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- SECCIÓN 5: REENTRANTLOCK, TRYLOCK Y CONDITION -->
+    <section id="reentrantlock" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">java.util.concurrent.locks</span>
+        <h3 class="text-xl font-bold text-slate-800">5. <code>ReentrantLock</code>, <code>tryLock()</code> y <code>Condition</code></h3>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+          <h4 class="font-bold text-amber-950 text-sm">Métodos de <code>ReentrantLock</code></h4>
+          <p class="text-amber-900">• <code>new ReentrantLock(boolean fair)</code>: Si <code>fair = true</code>, entrega el candado por estricto orden de llegada (FIFO).</p>
+          <p class="text-amber-900">• <code>lock()</code>: Coge el candado o duerme al hilo hasta que quede libre.</p>
+          <p class="text-amber-900">• <code>unlock()</code>: Suelta el candado. <strong>Obligatorio ponerlo en el bloque <code>finally</code>.</strong></p>
+          <p class="text-amber-900">• <code>tryLock()</code>: Mira si está libre en este nanosegundo. Si lo está, lo coge y devuelve <code>true</code>; si no, <strong>no espera</strong> y devuelve <code>false</code> (ideal para evitar <em>Deadlocks</em>).</p>
+          <p class="text-amber-900">• <code>tryLock(tiempo, TimeUnit)</code>: Espera como máximo ese tiempo; si no lo consigue, desiste y devuelve <code>false</code>.</p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-200 space-y-2">
+          <h4 class="font-bold text-indigo-950 text-sm">Salas de Espera Múltiples: <code>Condition</code></h4>
+          <p class="text-indigo-900">Se crean desde el lock: <code>Condition c = lock.newCondition();</code>. Permiten separar hilos por motivo de espera (ej. Productores vs. Consumidores):</p>
+          <p class="text-indigo-900">• <code>c.await()</code>: Equivalente a <code>wait()</code>. Suelta el <code>lock</code> automáticamente y duerme al hilo en esa sala específica.</p>
+          <p class="text-indigo-900">• <code>c.signal()</code>: Equivalente a <code>notify()</code>. Despierta a 1 hilo de esa sala concreta.</p>
+          <p class="text-indigo-900">• <code>c.signalAll()</code>: Equivalente a <code>notifyAll()</code>. Despierta a todos los de esa sala concreta.</p>
+        </div>
+      </div>
+
+      <!-- Desplegable 1: Productor-Consumidor (CintaTransportadora) -->
+      <details class="border border-slate-200 rounded-xl overflow-hidden" open>
+        <summary class="bg-slate-100 hover:bg-slate-200/70 px-4 py-3 font-bold text-slate-800 text-sm flex items-center justify-between transition">
+          <span><span class="arrow mr-2">▶</span> Ejemplo Real A: Productor-Consumidor con 2 Conditions (<code>CintaTransportadora</code>)</span>
+          <span class="text-xs font-normal text-slate-500">cintaNoLlena y cintaNoVacia</span>
+        </summary>
+        <div class="p-4 bg-white space-y-2">
+          <p class="text-xs text-slate-600">
+            <strong>Idea clave:</strong> Cada uno espera en la sala de lo que le falta, y al terminar toca el timbre (<code>signal()</code>) de la sala del otro.
+          </p>
+          <pre><code class="language-java">import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class CintaTransportadora {
+    private final List<Integer> cinta = new ArrayList<>();
+    private final int capacidadMaxima;
+
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition cintaNoLlena = lock.newCondition(); // Sala de espera para Productores
+    private final Condition cintaNoVacia = lock.newCondition(); // Sala de espera para Consumidores
+
+    public CintaTransportadora(int capacidadMaxima) {
+        this.capacidadMaxima = capacidadMaxima;
+    }
+
+    // PRODUCTOR (AGV)
+    public void ponerBateria(int idBateria) throws InterruptedException {
+        lock.lock();
+        try {
+            while (cinta.size() == capacidadMaxima) {
+                cintaNoLlena.await(); // Cinta llena: suelta lock y espera en su sala
+            }
+            cinta.add(idBateria);
+            cintaNoVacia.signal();    // Avisa a un Consumidor de que ya hay material
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // CONSUMIDOR (Robot)
+    public int recogerBateria() throws InterruptedException {
+        lock.lock();
+        try {
+            while (cinta.isEmpty()) {
+                cintaNoVacia.await(); // Cinta vacía: suelta lock y espera en su sala
+            }
+            int bateria = cinta.remove(0);
+            cintaNoLlena.signal();    // Avisa a un Productor de que ya hay hueco libre
+            return bateria;
+        } finally {
+            lock.unlock();
+        }
+    }
+}</code></pre>
+        </div>
+      </details>
+
+      <!-- Desplegable 2: Cola de Prioridad (Opción A CyberAssembly) -->
+      <details class="border border-slate-200 rounded-xl overflow-hidden">
+        <summary class="bg-slate-100 hover:bg-slate-200/70 px-4 py-3 font-bold text-slate-800 text-sm flex items-center justify-between transition">
+          <span><span class="arrow mr-2">▶</span> Ejemplo Real B: Cola de Prioridad Absoluta (Batería Crítica &lt; 10%)</span>
+          <span class="text-xs font-normal text-slate-500">colaCritica vs. colaNormal</span>
+        </summary>
+        <div class="p-4 bg-white space-y-2">
+          <p class="text-xs text-slate-600">
+            <strong>Cómo dar prioridad:</strong> Usamos un contador <code>criticosEsperando</code>. Los hilos normales añaden <code>|| criticosEsperando &gt; 0</code> en su <code>while</code> para ceder el paso obligatoriamente.
+          </p>
+          <pre><code class="language-java">private int plazasLibres = 3;
+private int criticosEsperando = 0;
+private final ReentrantLock lock = new ReentrantLock();
+private final Condition colaCritica = lock.newCondition();
+private final Condition colaNormal = lock.newCondition();
+
+public void entrarConPrioridad(boolean esCritico) throws InterruptedException {
+    lock.lock();
+    try {
+        if (esCritico) {
+            criticosEsperando++;
+            try {
+                while (plazasLibres == 0) colaCritica.await();
+            } finally {
+                criticosEsperando--;
+            }
+        } else {
+            // Si es normal, espera si no hay sitio O si hay algún crítico esperando
+            while (plazasLibres == 0 || criticosEsperando > 0) {
+                colaNormal.await();
+            }
+        }
+        plazasLibres--;
+    } finally {
+        lock.unlock();
+    }
+}
+
+public void salir() {
+    lock.lock();
+    try {
+        plazasLibres++;
+        if (criticosEsperando > 0) colaCritica.signal(); // Prioriza despertar urgencias
+        else colaNormal.signal();
+    } finally {
+        lock.unlock();
+    }
+}</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- SECCIÓN 6: DEADLOCKS Y CHECKLIST DE EXAMEN -->
+    <section id="deadlocks" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-rose-600">Prevención de Interbloqueos</span>
+        <h3 class="text-xl font-bold text-slate-800">6. <em>Deadlock</em> (Abrazo Mortal) y Estrategias de Solución</h3>
+      </div>
+
+      <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs sm:text-sm text-rose-950 space-y-1.5">
+        <p class="font-bold">⚠️ ¿Cuándo ocurre un Deadlock?</p>
+        <p>Cuando dos o más hilos se bloquean mutuamente esperando un recurso que tiene el otro (ej. Hilo A tiene el Candado 1 y espera el 2; Hilo B tiene el Candado 2 y espera el 1). Ninguno avanza ni libera lo que tiene.</p>
+        <p class="font-semibold pt-1">Las 3 soluciones clásicas de examen:</p>
+        <ul class="list-disc list-inside space-y-0.5 text-xs">
+          <li><strong>1. Ordenación de recursos (Romper simetría):</strong> Todos cogen primero el recurso de ID menor y luego el de ID mayor (o el último filósofo coge derecho antes que izquierdo).</li>
+          <li><strong>2. Uso de <code>tryLock()</code>:</strong> Si coges el primer candado pero <code>segundo.tryLock()</code> devuelve <code>false</code>, sueltas el primero, esperas un poco y reintentas.</li>
+          <li><strong>3. Limitar acceso con <code>Semaphore(N - 1)</code>:</strong> Si hay 5 filósofos, solo dejar sentarse a 4 a la mesa a la vez garantiza que al menos 1 siempre pueda comer.</li>
+        </ul>
+      </div>
+
+      <!-- Desplegable: Problema de los Filósofos -->
+      <details class="border border-slate-200 rounded-xl overflow-hidden" open>
+        <summary class="bg-slate-100 hover:bg-slate-200/70 px-4 py-3 font-bold text-slate-800 text-sm flex items-center justify-between transition">
+          <span><span class="arrow mr-2">▶</span> Ejemplo Real: Cena de los Filósofos (Estrategia Asimétrica con <code>ReentrantLock</code>)</span>
+          <span class="text-xs font-normal text-slate-500">Prevención de Deadlock</span>
+        </summary>
+        <div class="p-4 bg-white space-y-2">
+          <pre><code class="language-java">import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class Filosofo implements Runnable {
+    private final int id;
+    private final Lock cubiertoIzq;
+    private final Lock cubiertoDer;
+
+    public Filosofo(int id, Lock cubiertoIzq, Lock cubiertoDer) {
+        this.id = id;
+        this.cubiertoIzq = cubiertoIzq;
+        this.cubiertoDer = cubiertoDer;
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                // Pensar
+                Thread.sleep((long) (Math.random() * 200));
+
+                // ESTRATEGIA ASIMÉTRICA: El último filósofo invierte el orden para romper el ciclo
+                Lock primero = (id == 4) ? cubiertoDer : cubiertoIzq;
+                Lock segundo = (id == 4) ? cubiertoIzq : cubiertoDer;
+
+                primero.lock();
+                try {
+                    segundo.lock();
+                    try {
+                        // Comer (tiene ambos cubiertos en exclusión mutua)
+                        System.out.println("Filósofo " + id + " está comiendo.");
+                        Thread.sleep((long) (Math.random() * 200));
+                    } finally {
+                        segundo.unlock(); // Libera el segundo
+                    }
+                } finally {
+                    primero.unlock();     // Libera el primero
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}</code></pre>
+        </div>
+      </details>
+
+      <!-- Checklist Final -->
+      <div class="bg-slate-900 text-slate-100 rounded-xl p-5 space-y-2.5">
+        <h4 class="font-bold text-amber-400 text-sm uppercase tracking-wider">✅ Checklist antes de entregar el examen práctico</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300">
+          <div>✔ ¿Arrancaste todos los hilos con <code>.start()</code> y no con <code>.run()</code>?</div>
+          <div>✔ ¿Todos los hilos reciben el <strong>mismo</strong> objeto recurso compartido?</div>
+          <div>✔ ¿Pusiste <code>.join()</code> en el <code>main</code> antes de mostrar los resultados finales?</div>
+          <div>✔ ¿Están todos los <code>wait()</code> y <code>await()</code> dentro de un bucle <code>while</code>?</div>
+          <div>✔ ¿Están todos los <code>unlock()</code> y <code>release()</code> dentro de un <code>finally</code>?</div>
+          <div>✔ ¿Has evitado hacer <code>Thread.sleep()</code> dentro de zonas críticas innecesarias?</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Pie de página con enlace directo al Tema 1 -->
+  <footer class="bg-white border-t border-slate-200 mt-10">
+    <div class="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <span>Cuaderno PSP · Preparación Examen Práctico (Java Concurrency)</span>
+      <a href="tema1.html" class="px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold transition">
+        ← Volver a Tema 1: Programación Multiproceso (tema1.html)
+      </a>
+    </div>
+  </footer>
+
+</body>
+</html>

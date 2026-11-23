@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSP · Teoría Completa: Temas 1 y 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { background-color: #f8fafc; color: #1e293b; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    pre[class*="language-"] { border-radius: 0.75rem; margin: 0.75rem 0; font-size: 0.85rem; line-height: 1.5; border: 1px solid #334155; }
+    details > summary { list-style: none; cursor: pointer; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] summary .arrow { transform: rotate(90deg); }
+    .arrow { transition: transform 0.2s ease; display: inline-block; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Barra de navegación conectada con tema1.html y tema2.html -->
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs tracking-wide uppercase">DAM 2 · PSP</span>
+        <h1 class="font-bold text-slate-800 text-base sm:text-lg">Cuaderno Teórico de Examen</h1>
+      </div>
+      <nav class="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-medium">
+        <a href="tema1.html" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          Práctica Tema 1
+        </a>
+        <a href="tema2.html" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          Práctica Tema 2
+        </a>
+        <a href="teoria.html" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white shadow-sm">
+          Teoría Temas 1 y 2
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Sub-navegación rápida de secciones -->
+  <div class="bg-emerald-50/80 border-b border-emerald-100">
+    <div class="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap gap-2 text-xs sm:text-sm font-medium text-emerald-950">
+      <span class="text-emerald-600 font-semibold py-1">Temario:</span>
+      <a href="#t1-conceptos" class="px-2.5 py-1 rounded-md hover:bg-emerald-100 transition">T1.1 Conceptos y PCB</a>
+      <a href="#t1-ciclo" class="px-2.5 py-1 rounded-md hover:bg-emerald-100 transition">T1.2 Ciclo de Vida y Comparativa</a>
+      <a href="#t1-ipc" class="px-2.5 py-1 rounded-md hover:bg-emerald-100 transition">T1.3 Flujos E/S y API Java</a>
+      <a href="#t2-hilos" class="px-2.5 py-1 rounded-md hover:bg-emerald-100 transition">T2.1 Hilos y Memoria</a>
+      <a href="#t2-riesgos" class="px-2.5 py-1 rounded-md hover:bg-emerald-100 transition">T2.2 Riesgos (Race, Deadlock, Starvation)</a>
+      <a href="#t2-mecanismos" class="px-2.5 py-1 rounded-md hover:bg-emerald-100 transition">T2.3 Sincronización y Atómicas</a>
+    </div>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-10 flex-1">
+
+    <!-- Cabecera Hero -->
+    <section class="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 sm:p-8 text-white shadow-md">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <p class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">Fundamentos Teóricos · Temario Oficial</p>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Teoría Completa: Tema 1 (Procesos) y Tema 2 (Hilos)</h2>
+          <p class="mt-2 text-emerald-50 text-sm sm:text-base max-w-2xl">
+            Todos los conceptos clave, arquitecturas de memoria, estados, comparativas, riesgos de concurrencia y definiciones de API listos para preguntas tipo test o desarrollo teórico.
+          </p>
+        </div>
+        <div class="bg-white/15 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-xs space-y-1.5 shrink-0">
+          <div class="font-bold text-white uppercase tracking-wide">Mapa Rápido</div>
+          <p class="text-emerald-50">• <strong>Tema 1:</strong> Programa vs Proceso, PCB, Estados, IPC.</p>
+          <p class="text-emerald-50">• <strong>Tema 2:</strong> Heap vs Stack, Race Condition, Deadlock.</p>
+          <p class="text-emerald-50">• <strong>Extra T2:</strong> Monitores, Locks, Semáforos y Atomic.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TEMA 1: PROGRAMACIÓN MULTIPROCESO -->
+    <!-- ===================================================================== -->
+    <div class="flex items-center gap-3 pt-2">
+      <span class="px-3 py-1 rounded-full bg-sky-600 text-white font-bold text-xs uppercase tracking-wider">Tema 1</span>
+      <h2 class="text-2xl font-extrabold text-slate-800">Programación Multiproceso</h2>
+    </div>
+
+    <!-- T1.1 CONCEPTOS Y PCB -->
+    <section id="t1-conceptos" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-sky-600">Bloque 1 · Conceptos y Gestión</span>
+        <h3 class="text-xl font-bold text-slate-800">1.1. Programa, Executable, Proceso y PCB</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-xs font-bold">Estático</span>
+          <h4 class="font-bold text-slate-800 text-base">Programa</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Conjunto de instrucciones escritas en un lenguaje de programación almacenadas en disco que definen la lógica de la aplicación. No consume CPU ni RAM de ejecución.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-bold">Binario</span>
+          <h4 class="font-bold text-slate-800 text-base">Ejecutable</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Fichero en formato binario (o bytecode <code>.class</code>/<code>.jar</code> en Java) preparado para que el Sistema Operativo o la JVM pueda cargarlo en memoria.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-sky-50 border border-sky-200 space-y-1.5">
+          <span class="px-2 py-0.5 rounded bg-sky-600 text-white text-xs font-bold">Dinámico</span>
+          <h4 class="font-bold text-sky-950 text-base">Proceso</h4>
+          <p class="text-xs text-sky-900 leading-relaxed">
+            Instancia de un programa en ejecución con recursos asignados de forma <strong>independiente</strong>: espacio de direcciones de memoria aislado, registros de CPU, contador de programa y tabla de descriptores de ficheros.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+        <div class="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 space-y-2">
+          <h4 class="font-bold text-indigo-950 text-sm">🗂️ Bloque de Control de Proceso (PCB) y Aislamiento</h4>
+          <p class="text-xs text-indigo-900 leading-relaxed">
+            El SO mantiene el control de cada proceso mediante una estructura de datos llamada <strong>PCB (Process Control Block)</strong>, que guarda:
+          </p>
+          <ul class="list-disc list-inside text-xs text-indigo-900 space-y-1">
+            <li><strong>PID (Process Identifier):</strong> Identificador numérico único del proceso.</li>
+            <li><strong>Estado actual:</strong> Nuevo, Listo, En ejecución, Bloqueado o Terminado.</li>
+            <li><strong>Contador de programa (PC) y Registres de CPU:</strong> Qué instrucción toca ejecutar.</li>
+            <li><strong>Gestión de memoria y prioridad:</strong> Límites de RAM asignada y prioridad de planificación.</li>
+          </ul>
+          <p class="text-xs text-indigo-950 font-semibold pt-1">
+            ⚠️ Aislamiento: Un proceso NO puede leer ni escribir directamente en la memoria de otro proceso; necesita mecanismos IPC (Pipes, Sockets, Ficheros).
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-200 space-y-2">
+          <h4 class="font-bold text-amber-950 text-sm">🌳 Jerarquía y Tipología según Interfaz</h4>
+          <p class="text-xs text-amber-900 leading-relaxed">
+            Cuando un proceso crea a otro, se forma una jerarquía padre-hijo conocida como <strong>Árbol de Procesos</strong>. Según su interacción con el usuario se dividen en:
+          </p>
+          <ul class="list-disc list-inside text-xs text-amber-900 space-y-1.5">
+            <li><strong>Primer Plano (Foreground):</strong> Requieren interacción directa con el usuario mediante interfaz gráfica (GUI) o consola (CLI).</li>
+            <li><strong>Segundo Plano (Background) / Demonios (Daemons):</strong> Se ejecutan de forma silenciosa sin interfaz visible dando servicios al sistema (ej. servidor MySQL, servidor HTTP Apache).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- T1.2 CICLO DE VIDA Y COMPARATIVA -->
+    <section id="t1-ciclo" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-sky-600">Bloque 2 · Planificación y Arquitectura</span>
+        <h3 class="text-xl font-bold text-slate-800">1.2. Ciclo de Vida de un Proceso, Concurrencia y Comparativa</h3>
+      </div>
+
+      <!-- Diagrama de 5 estados -->
+      <div class="space-y-2">
+        <h4 class="font-bold text-slate-800 text-sm">Los 5 Estados del Ciclo de Vida de un Proceso</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs">
+          <div class="p-3 rounded-xl bg-slate-100 border border-slate-300">
+            <div class="font-bold text-slate-800">1. Nuevo (New)</div>
+            <p class="text-slate-600 mt-1">Se está creando el proceso y el SO le reserva espacio en memoria y su PCB.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-sky-50 border border-sky-300">
+            <div class="font-bold text-sky-800">2. Listo (Ready)</div>
+            <p class="text-sky-900 mt-1">Tiene todo lo necesario para ejecutarse; espera en cola a que el <em>Scheduler</em> le dé CPU.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-300">
+            <div class="font-bold text-emerald-800">3. En Ejecución (Running)</div>
+            <p class="text-emerald-900 mt-1">La CPU está ejecutando sus instrucciones actualmente.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-amber-50 border border-amber-300">
+            <div class="font-bold text-amber-800">4. Bloqueado (Blocked)</div>
+            <p class="text-amber-900 mt-1">Pausado esperando un evento externo (ej. lectura de disco, red o <code>waitFor()</code>).</p>
+          </div>
+          <div class="p-3 rounded-xl bg-rose-50 border border-rose-300">
+            <div class="font-bold text-rose-800">5. Finalizado (Terminated)</div>
+            <p class="text-rose-900 mt-1">Ha terminado su ejecución (normal o por error) y el SO libera su memoria.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Concurrencia vs Paralelismo -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-violet-50 border border-violet-200">
+          <h4 class="font-bold text-violet-950 text-sm">🔄 Programación Concurrente</h4>
+          <p class="text-violet-900 mt-1 leading-relaxed">
+            Múltiples tareas progresan en intervalos de temps intercalados. En un sistema con <strong>un solo núcleo</strong>, se logra alternando rápidamente entre procesos mediante el <strong>cambio de contexto</strong> (multiprogramación).
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-teal-50 border border-teal-200">
+          <h4 class="font-bold text-teal-950 text-sm">⚡ Programación Paralela</h4>
+          <p class="text-teal-900 mt-1 leading-relaxed">
+            Múltiples instrucciones se ejecutan <strong>simultáneamente en el mismo instante físico</strong> aprovechando varios núcleos (<em>multicore</em>) o varios procesadores reales.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tabla Procesos vs Hilos -->
+      <div class="overflow-x-auto">
+        <h4 class="font-bold text-slate-800 text-sm mb-2">Comparativa Clave de Examen: Procesos vs. Hilos</h4>
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+              <th class="p-3 font-bold">Característica</th>
+              <th class="p-3 font-bold text-sky-800">Proceso (Entidad Pesada)</th>
+              <th class="p-3 font-bold text-indigo-800">Hilo / Thread (Entidad Ligera)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr>
+              <td class="p-3 font-semibold">Espacio de Memoria</td>
+              <td class="p-3">Aislado e independiente para cada proceso.</td>
+              <td class="p-3">Compartido (Heap) entre todos los hilos del mismo proceso.</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold">Coste de Creación</td>
+              <td class="p-3">Elevado (overhead alto para el SO).</td>
+              <td class="p-3">Muy bajo y rápido de crear.</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold">Cambio de Contexto</td>
+              <td class="p-3">Lento: requiere guardar y restaurar todo el PCB.</td>
+              <td class="p-3">Rápido: solo cambia registros de CPU y su pila (Stack).</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold">Comunicación</td>
+              <td class="p-3">Requiere mecanismos IPC (Pipes, Sockets, Ficheros).</td>
+              <td class="p-3">Directa mediante variables compartidas en memoria.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- T1.3 FLUJOS E/S Y API JAVA -->
+    <section id="t1-ipc" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-sky-600">Bloque 3 · Comunicación entre Procesos (IPC)</span>
+        <h3 class="text-xl font-bold text-slate-800">1.3. Canales Estándar, API Java y Prevención de <em>Buffer Deadlock</em></h3>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-800 text-sm">Canales Estándar y Perspectiva del Padre en Java</h4>
+          <p class="text-slate-600">Todo proceso nace con 3 descriptores de fichero estándar: <code>stdin</code> (0), <code>stdout</code> (1) y <code>stderr</code> (2). En Java, los métodos de <code>Process</code> se nombran <strong>desde el punto de vista del Padre</strong>:</p>
+          <ul class="space-y-1.5 text-slate-700">
+            <li class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><code>p.getOutputStream()</code> → El Padre <strong>escribe</strong> hacia el <code>System.in</code> del Hijo.</li>
+            <li class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><code>p.getInputStream()</code> → El Padre <strong>lee</strong> lo que el Hijo imprime por su <code>System.out</code>.</li>
+            <li class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><code>p.getErrorStream()</code> → El Padre <strong>lee</strong> los errores que el Hijo manda a <code>System.err</code>.</li>
+          </ul>
+          <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-950">
+            <strong>⚠️ Riesgo de Buffer Deadlock:</strong> Las tuberías usan buffers limitados del SO. Si el Hijo escribe muchos datos por <code>stdout</code> y el Padre llama a <code>waitFor()</code> <em>antes</em> de leerlos, el buffer se llena, el Hijo se bloquea esperando que se vacíe y el Padre se bloquea esperando que el Hijo acabe. <strong>Solución:</strong> Leer siempre antes de <code>waitFor()</code> y hacer <code>flush()</code>/<code>close()</code> al escribir.
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="font-bold text-slate-800 text-sm">Clases Principales de <code>java.lang</code></h4>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div class="font-bold text-sky-700"><code>ProcessBuilder</code> (Configurador)</div>
+            <p class="text-slate-600">Prepara el comando, argumentos, directorio (<code>directory()</code>) y redirecciones (<code>redirectErrorStream(true)</code>, <code>Redirect.INHERIT</code>) antes de arrancar con <code>start()</code>.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div class="font-bold text-sky-700"><code>Process</code> (Proceso vivo)</div>
+            <p class="text-slate-600">Representa el proceso en ejecución. Permite obtener flujos, esperar su fin (<code>waitFor()</code>), consultar el código de salida (<code>exitValue()</code>: <code>0</code> = éxito, distinto de 0 = error) o matarlo (<code>destroy()</code>).</p>
+          </div>
+          <pre><code class="language-java">ProcessBuilder pb = new ProcessBuilder("java", "Hijo");
+pb.redirectErrorStream(true); // Une stderr con stdout
+Process p = pb.start();
+// 1. Escribir y cerrar flujo (envía EOF)
+// 2. Leer respuesta completa
+int codigo = p.waitFor(); // 3. Esperar finalización</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TEMA 2: PROGRAMACIÓN MULTIHILO Y CONCURRENCIA -->
+    <!-- ===================================================================== -->
+    <div class="flex items-center gap-3 pt-4">
+      <span class="px-3 py-1 rounded-full bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider">Tema 2</span>
+      <h2 class="text-2xl font-extrabold text-slate-800">Programación Multihilo y Concurrencia</h2>
+    </div>
+
+    <!-- T2.1 HILOS Y MEMORIA -->
+    <section id="t2-hilos" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Bloque 1 y 2 · Arquitectura y Ciclo de Vida</span>
+        <h3 class="text-xl font-bold text-slate-800">2.1. Hilos en Memoria (Heap vs. Stack), Estados y Creación</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-200 space-y-1.5">
+          <h4 class="font-bold text-indigo-950 text-sm">🧠 Arquitectura en Memoria dentro de un Proceso</h4>
+          <p class="text-indigo-900 leading-relaxed">
+            Cuando arranca un programa Java nace al menos un hilo principal (<code>main</code>). Si el proceso muere, mueren todos sus hilos. Dentro del mismo proceso:
+          </p>
+          <ul class="list-disc list-inside text-indigo-900 space-y-1">
+            <li><strong>Compartido entre todos los hilos:</strong> El espacio de datos/objetos (<strong>Heap</strong>), el código y los descriptores de ficheros. Si un hilo modifica un atributo de un objeto compartido, los demás lo ven.</li>
+            <li><strong>Privado de cada hilo:</strong> Su propio Contador de Programa (PC), registros de CPU y su propia <strong>Pila de ejecución (Stack)</strong> para variables locales y llamadas a métodos.</li>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <h4 class="font-bold text-slate-800 text-sm">🔄 Estados de un Hilo en Java</h4>
+          <ul class="list-disc list-inside text-slate-700 space-y-1">
+            <li><strong>New:</strong> Instanciado (<code>new Thread(...)</code>) pero aún sin llamar a <code>start()</code>.</li>
+            <li><strong>Runnable:</strong> Tras <code>start()</code>, listo esperando turno del <em>Thread Scheduler</em>.</li>
+            <li><strong>Running:</strong> Ejecutando las instrucciones de <code>run()</code> en la CPU.</li>
+            <li><strong>Blocked / Waiting / Timed_Waiting:</strong> Pausado por <code>sleep()</code>, <code>wait()</code>, <code>join()</code> o esperando entrar a un bloque <code>synchronized</code>/<code>Lock</code>.</li>
+            <li><strong>Dead / Terminated:</strong> Ha acabado <code>run()</code> (no se puede reiniciar).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950">
+        <strong>Creación en Java (<code>extends Thread</code> vs. <code>implements Runnable</code>):</strong> Se recomienda implementar <code>Runnable</code> porque Java no permite herencia múltiple y separa la tarea del hilo. <strong>Regla crítica:</strong> Arrancar siempre con <code>t.start()</code> (crea el hilo paralelo en el SO); llamar a <code>t.run()</code> ejecuta el código secuencialmente en el hilo actual. Para esperar a que un hilo acabe se usa <code>t.join()</code>.
+      </div>
+    </section>
+
+    <!-- T2.2 RIESGOS DE CONCURRENCIA -->
+    <section id="t2-riesgos" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-rose-600">Bloque 3 · Problemas Clásicos</span>
+        <h3 class="text-xl font-bold text-slate-800">2.2. Sección Crítica y los 4 Riesgos de la Concurrencia</h3>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-800">
+        <strong>Sección Crítica:</strong> Fragmento de código que accede a un recurso compartido (variable, lista, fichero) y que <strong>no debe ser ejecutado por más de un hilo simultáneamente</strong> para evitar corrupción de datos.
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-1">
+          <h4 class="font-bold text-rose-950 text-sm">1. Condición de Carrera (<em>Race Condition</em>)</h4>
+          <p class="text-rose-900 leading-relaxed">
+            Ocurre cuando varios hilos acceden a la vez a un recurso compartido y al menos uno lo modifica sin sincronización (ej. <code>contador++</code>). El resultado final es impredecible y depende del orden fortuito en que el planificador de CPU intercale sus instrucciones.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-1">
+          <h4 class="font-bold text-rose-950 text-sm">2. Interbloqueo (<em>Deadlock</em> / Abrazo Mortal)</h4>
+          <p class="text-rose-900 leading-relaxed">
+            Dos o más hilos quedan bloqueados <strong>indefinidamente</strong> esperando cada uno un recurso que posee el otro (ej. Hilo A tiene R1 y pide R2; Hilo B tiene R2 y pide R1). Ninguno puede avanzar ni soltar lo que tiene.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
+          <h4 class="font-bold text-amber-950 text-sm">3. Inanición (<em>Starvation</em>)</h4>
+          <p class="text-amber-900 leading-relaxed">
+            Un hilo nunca consigue acceder al recurso compartido porque otros hilos con mayor prioridad o llegada continua le adelantan sistemáticamente en la cola. (Se evita usando políticas <em>fair</em> / justas).
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
+          <h4 class="font-bold text-amber-950 text-sm">4. Bloqueo Actiu (<em>Livelock</em>)</h4>
+          <p class="text-amber-900 leading-relaxed">
+            Los hilos no están dormidos, sino que cambian continuamente de estado reaccionando entre sí sin lograr ningún avance real (como dos personas que intentan esquivarse en un pasillo moviéndose siempre hacia el mismo lado).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- T2.3 MECANISMOS DE SINCRONIZACIÓN Y ATÓMICAS -->
+    <section id="t2-mecanismos" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Bloque 3 · Herramientas de Sincronización en Java</span>
+        <h3 class="text-xl font-bold text-slate-800">2.3. Monitores, <code>ReentrantLock</code>, <code>Semaphore</code> y Variables Atómicas</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <h4 class="font-bold text-indigo-800 text-sm">A. Exclusión Mutua y Monitores Nativos</h4>
+          <p class="text-slate-700">
+            • <strong><code>synchronized</code>:</strong> Adquiere el monitor intrínseco del objeto (solo 1 hilo dentro). Puede aplicarse a un método entero o a un bloque <code>synchronized(this)</code> más granular.<br/>
+            • <strong><code>wait()</code>, <code>notify()</code>, <code>notifyAll()</code>:</strong> Métodos de <code>Object</code> (se llaman dentro de <code>synchronized</code>). Al ejecutar <code>wait()</code>, el hilo <strong>libera el candado del monitor inmediatamente</strong> y pasa a estado de espera hasta que otro hilo llame a <code>notify()</code> (despierta 1) o <code>notifyAll()</code> (despierta a todos).
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <h4 class="font-bold text-indigo-800 text-sm">B. Bloqueos Explícitos (<code>ReentrantLock</code> + <code>Condition</code>)</h4>
+          <p class="text-slate-700">
+            Alternativa moderna con control manual (<code>lock()</code> y <code>unlock()</code> siempre en <code>finally</code>). Sus dos grandes ventajas son:<br/>
+            • <strong><code>tryLock()</code>:</strong> Permite intentar coger el candado sin quedarse bloqueado para siempre.<br/>
+            • <strong><code>Condition</code> (<code>await()</code> / <code>signal()</code>):</strong> Permite crear múltiples colas de espera en un mismo lock (ej. separar productores y consumidores).
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <h4 class="font-bold text-indigo-800 text-sm">C. Semáforos (<code>Semaphore</code>) y Mutex</h4>
+          <p class="text-slate-700">
+            Gestiona un conjunto de permisos para limitar cuántos hilos acceden a la vez a un recurso (<code>acquire()</code> pide permiso y resta 1; <code>release()</code> devuelve 1):<br/>
+            • <strong>Semáforo Contador (<code>new Semaphore(N)</code>):</strong> Permite hasta <code>N</code> hilos simultáneos.<br/>
+            • <strong>Semáforo Binario / Mutex (<code>new Semaphore(1)</code>):</strong> Con solo 1 permiso actúa igual que un bloqueo de exclusión mutua estricta.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-teal-50 border border-teal-200 space-y-1.5">
+          <h4 class="font-bold text-teal-950 text-sm">D. Variables y Clases Atómicas (<code>java.util.concurrent.atomic</code>)</h4>
+          <p class="text-teal-900">
+            Clases como <code>AtomicInteger</code>, <code>AtomicBoolean</code> o <code>AtomicReference</code> permiten realizar operaciones compuestas (como leer, sumar 1 y guardar con <code>incrementAndGet()</code>) en una <strong>única instrucción atómica a nivel de hardware/CPU</strong> (algoritmos CAS - <em>Compare-And-Swap</em>). Evitan el coste (<em>overhead</em>) y los bloqueos de usar <code>synchronized</code> o <code>Lock</code> cuando solo se protege una única variable.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ejemplo código AtomicInteger -->
+      <details class="border border-slate-200 rounded-xl overflow-hidden">
+        <summary class="bg-slate-100 hover:bg-slate-200/70 px-4 py-3 font-bold text-slate-800 text-sm flex items-center justify-between transition">
+          <span><span class="arrow mr-2">▶</span> Ejemplo Rápido: Contador sin candados con <code>AtomicInteger</code></span>
+          <span class="text-xs font-normal text-slate-500">java.util.concurrent.atomic</span>
+        </summary>
+        <div class="p-4 bg-white">
+          <pre><code class="language-java">import java.util.concurrent.atomic.AtomicInteger;
+
+public class ContadorSeguro {
+    // Sustituye a un int normal + synchronized
+    private final AtomicInteger visitas = new AtomicInteger(0);
+
+    public void registrarVisita() {
+        visitas.incrementAndGet(); // Operación atómica a nivel de CPU sin Race Condition
+    }
+
+    public int getTotal() {
+        return visitas.get();
+    }
+}</code></pre>
+        </div>
+      </details>
+    </section>
+
+  </main>
+
+  <!-- Pie de página conectado -->
+  <footer class="bg-white border-t border-slate-200 mt-10">
+    <div class="max-w-6xl mx-auto px-4 py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+      <span>Cuaderno PSP · Resumen Teórico Oficial (Temas 1 y 2)</span>
+      <div class="flex gap-2">
+        <a href="tema1.html" class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">
+          ← Práctica Tema 1
+        </a>
+        <a href="tema2.html" class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">
+          Práctica Tema 2 →
+        </a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

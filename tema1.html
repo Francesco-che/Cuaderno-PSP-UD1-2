@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuaderno PSP - Tema 1: Programación Multiproceso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] summary ~ * { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        pre[class*="language-"] {
+            border-radius: 0.75rem;
+            margin: 0.75rem 0;
+            font-size: 0.875rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        code:not([class*="language-"]) {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.375rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85em;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans selection:bg-blue-200 selection:text-slate-900">
+
+    <!-- Barra de Navegación Conectada -->
+    <nav class="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap justify-between items-center min-h-[4rem] py-2 gap-4">
+                <div class="flex items-center space-x-3">
+                    <span class="text-xl font-bold text-slate-800">📘 Guía Examen <span class="text-blue-600">PSP</span></span>
+                    <!-- Selector de Páginas (Temas) -->
+                    <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-sm font-semibold">
+                        <a href="tema1.html" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm">
+                            Tema 1: Procesos
+                        </a>
+                        <a href="tema2.html" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-white/60 transition-all">
+                            Tema 2: Hilos y Sincronización →
+                        </a>
+                        <a href="teoria.html" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white shadow-sm">
+          Teoría Temas 1 y 2
+        </a>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-slate-600">
+                    <a href="#planteamiento" class="hover:text-blue-600 transition-colors">1. Cómo Plantear</a>
+                    <a href="#arquitectura" class="hover:text-blue-600 transition-colors">2. Tuberías IPC</a>
+                    <a href="#metodos" class="hover:text-blue-600 transition-colors">3. Clases y Métodos</a>
+                    <a href="#ejemplos" class="hover:text-blue-600 transition-colors">4. Ejemplos Examen</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+
+        <!-- Cabecera -->
+        <header class="mb-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 md:p-10 text-white shadow-lg">
+            <div class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-semibold tracking-wider uppercase mb-3">
+                Unidad Didáctica 1 · Java Process API
+            </div>
+            <h1 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Programación Multiproceso</h1>
+            <p class="text-blue-100 text-lg max-w-3xl leading-relaxed">
+                Todo lo que necesitas para resolver ejercicios prácticos de examen: cómo plantear la arquitectura Padre-Hijo, dominar cada método de <code>ProcessBuilder</code> y <code>Process</code>, y evitar bloqueos de comunicación.
+            </p>
+        </header>
+
+        <!-- SECCIÓN 1: CÓMO PLANTEAR UN PROBLEMA -->
+        <section id="planteamiento" class="mb-16 scroll-mt-24">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center">
+                <span class="bg-blue-100 text-blue-700 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-base font-bold">1</span>
+                Cómo plantear cualquier ejercicio del Tema 1 antes de programar
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="text-blue-600 font-bold text-sm uppercase mb-2">Paso 1 · Roles</div>
+                    <h3 class="font-bold text-slate-800 mb-2">Identifica Padre e Hijo</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        El <strong>Padre</strong> es el orquestador (pide datos al usuario o lee un fichero, lanza procesos y recoge resultados). El <strong>Hijo</strong> es un programa independiente con su propio <code>main</code> que hace una tarea concreta.
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="text-blue-600 font-bold text-sm uppercase mb-2">Paso 2 · Vías de Datos</div>
+                    <h3 class="font-bold text-slate-800 mb-2"><code>args[0]</code> vs <code>System.in</code></h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Usa <code>args[0]</code> para pasar <strong>configuración fija</strong> al arrancar (ej. palabra clave <code>"ERROR"</code> o longitud mínima <code>"8"</code>). Usa tuberías (<code>OutputStream</code> ➔ <code>System.in</code>) para enviar <strong>datos variables</strong> o múltiples líneas.
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="text-blue-600 font-bold text-sm uppercase mb-2">Paso 3 · Protocolo</div>
+                    <h3 class="font-bold text-slate-800 mb-2">¿1 envío o en bucle?</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Si el hijo lee múltiples líneas en un <code>while ((linea = br.readLine()) != null)</code>, el Padre <strong>debe cerrar</strong> su <code>OutputStream</code> (<code>close()</code>) para enviar la señal de fin de archivo (EOF) y que el hijo salga del bucle.
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="text-blue-600 font-bold text-sm uppercase mb-2">Paso 4 · Cierre</div>
+                    <h3 class="font-bold text-slate-800 mb-2">Lee, Espera y Verifica</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Orden estricto en el Padre: <strong>1º</strong> envía datos y cierra salida, <strong>2º</strong> lee toda la respuesta del hijo, <strong>3º</strong> llama a <code>waitFor()</code> para recoger el código de salida (<code>0</code> = OK, <code>1</code> = Error).
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: ARQUITECTURA DE TUBERÍAS Y CONCEPTOS -->
+        <section id="arquitectura" class="mb-16 scroll-mt-24">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center">
+                <span class="bg-blue-100 text-blue-700 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-base font-bold">2</span>
+                Perspectiva Padre-Hijo y Conceptos Clave de Teoría
+            </h2>
+
+            <!-- Diagrama Visual de Tuberías -->
+            <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm mb-8">
+                <h3 class="font-bold text-lg text-slate-800 mb-2">La Regla de Oro: Todo se nombra desde el punto de vista del PADRE</h3>
+                <p class="text-sm text-slate-600 mb-6">
+                    Cada proceso tiene su propia memoria aislada (PCB propio). Para hablar entre ellos, el Sistema Operativo conecta tres tuberías estándar (Pipes):
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <!-- Bloque Padre -->
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
+                        <div class="font-bold text-blue-900 text-center text-lg mb-3">PROCESO PADRE</div>
+                        <div class="space-y-3 text-xs font-mono">
+                            <div class="bg-white p-2.5 rounded border border-blue-200">
+                                <span class="text-emerald-600 font-bold">p.getOutputStream()</span><br>
+                                <span class="text-slate-500 font-sans">El padre ESCRIBE datos hacia el hijo</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-blue-200">
+                                <span class="text-blue-600 font-bold">p.getInputStream()</span><br>
+                                <span class="text-slate-500 font-sans">El padre LEE resultados del hijo</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-blue-200">
+                                <span class="text-rose-600 font-bold">p.getErrorStream()</span><br>
+                                <span class="text-slate-500 font-sans">El padre LEE errores del hijo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flechas Centrales -->
+                    <div class="flex flex-col justify-center space-y-5 text-center text-xs font-bold">
+                        <div class="bg-emerald-100 text-emerald-800 py-2 px-3 rounded-lg border border-emerald-200">
+                            ENVÍO DE DATOS ➔<br>
+                            <span class="font-normal text-[11px]">No olvides .newLine() y .flush()</span>
+                        </div>
+                        <div class="bg-blue-100 text-blue-800 py-2 px-3 rounded-lg border border-blue-200">
+                            ⬅ RESPUESTA NORMAL<br>
+                            <span class="font-normal text-[11px]">Viaja lo que el hijo imprime con println()</span>
+                        </div>
+                        <div class="bg-rose-100 text-rose-800 py-2 px-3 rounded-lg border border-rose-200">
+                            ⬅ CANAL DE ERRORES<br>
+                            <span class="font-normal text-[11px]">O redirigido con pb.redirectError(...)</span>
+                        </div>
+                    </div>
+
+                    <!-- Bloque Hijo -->
+                    <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-5">
+                        <div class="font-bold text-indigo-900 text-center text-lg mb-3">PROCESO HIJO</div>
+                        <div class="space-y-3 text-xs font-mono">
+                            <div class="bg-white p-2.5 rounded border border-indigo-200">
+                                <span class="text-emerald-600 font-bold">System.in</span><br>
+                                <span class="text-slate-500 font-sans">El hijo LEE con BufferedReader / Scanner</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-indigo-200">
+                                <span class="text-blue-600 font-bold">System.out</span><br>
+                                <span class="text-slate-500 font-sans">El hijo ESCRIBE con System.out.println()</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-indigo-200">
+                                <span class="text-rose-600 font-bold">System.err</span><br>
+                                <span class="text-slate-500 font-sans">El hijo REPORTA fallos con System.err.println()</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla Comparativa Rápida -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-800">
+                    Resumen Teórico Rápido (Preguntas cortas de examen)
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-100 text-slate-700 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3">Concepto</th>
+                                <th class="px-6 py-3">Definición Clave</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-slate-600">
+                            <tr>
+                                <td class="px-6 py-3 font-semibold text-slate-800">Programa vs Proceso</td>
+                                <td class="px-6 py-3"><strong>Programa:</strong> estático, código en disco. <strong>Proceso:</strong> dinámico, programa cargado en RAM con su propio PID, memoria aislada y PCB (Process Control Block).</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-semibold text-slate-800">Concurrencia vs Paralelismo</td>
+                                <td class="px-6 py-3"><strong>Concurrencia:</strong> múltiples tareas progresan intercalando turnos de CPU (cambio de contexto). <strong>Paralelismo:</strong> ejecución simultánea real en el mismo instante usando varios núcleos (multicore).</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-semibold text-slate-800">ProcessBuilder vs Runtime.exec()</td>
+                                <td class="px-6 py-3"><code>ProcessBuilder</code> es el estándar actual: recibe una lista segura de argumentos, permite redirigir flujos, configurar el directorio de trabajo y gestionar el entorno. <code>Runtime.exec()</code> está obsoleto y falla con rutas con espacios.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-semibold text-slate-800">Buffer Deadlock</td>
+                                <td class="px-6 py-3">Ocurre si el hijo escribe muchos datos por <code>stdout</code>/<code>stderr</code>, llena el buffer del SO y se bloquea esperando que el padre lea, mientras el padre está bloqueado en <code>waitFor()</code> sin leer.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: CLASES Y MÉTODOS -->
+        <section id="metodos" class="mb-16 scroll-mt-24">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center">
+                <span class="bg-blue-100 text-blue-700 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-base font-bold">3</span>
+                Estructura Base y Diccionario de Métodos (ProcessBuilder y Process)
+            </h2>
+
+            <!-- Esqueleto Base -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8">
+                <h3 class="font-bold text-lg text-slate-800 mb-2">Esqueleto Estándar para lanzar una clase Java hija en el examen</h3>
+                <p class="text-sm text-slate-600 mb-3">
+                    Memoriza estas dos líneas iniciales (<code>java</code> y <code>classpath</code>): evitan el típico error <code>ClassNotFoundException</code> al ejecutar desde IntelliJ o VS Code.
+                </p>
+                <pre><code class="language-java">// 1. Localizar el ejecutable java y el classpath actual del proyecto
+String java = Paths.get(System.getProperty("java.home"), "bin", "java").toString();
+String classpath = System.getProperty("java.class.path");
+
+// 2. Configurar el comando y los argumentos (args[0], args[1]...)
+ProcessBuilder pb = new ProcessBuilder(java, "-cp", classpath, "NombreClaseHija", "arg0");
+
+// 3. Redirección opcional de errores (a fichero o a consola del padre)
+pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+// 4. Arrancar el proceso
+Process hijo = pb.start();
+
+// 5. Escribir datos al hijo (si el hijo lee de System.in)
+try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(hijo.getOutputStream()))) {
+    bw.write("Texto enviado al hijo");
+    bw.newLine();
+    bw.flush();
+} // El cierre automático envía EOF (null) al readLine() del hijo
+
+// 6. Leer la salida del hijo (lo que el hijo imprime por System.out)
+try (BufferedReader br = new BufferedReader(new InputStreamReader(hijo.getInputStream()))) {
+    String linea;
+    while ((linea = br.readLine()) != null) {
+        System.out.println("Respuesta: " + linea);
+    }
+}
+
+// 7. Esperar a que termine y obtener su código de salida (0 = éxito)
+int codigoSalida = hijo.waitFor();</code></pre>
+            </div>
+
+            <!-- Tabla Detallada de Métodos -->
+            <div class="space-y-6">
+                <h3 class="font-bold text-xl text-slate-800">Detalle de cada método y ejemplo real de uso</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- ProcessBuilder methods -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <span class="font-bold text-blue-700 text-lg">Clase ProcessBuilder</span>
+                            <span class="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Configuración</span>
+                        </div>
+
+                        <div class="space-y-3 text-sm">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-blue-800">new ProcessBuilder(String... command)</code>
+                                <p class="text-slate-600 mt-1">Crea el lanzador. Cada parámetro es un token del comando (sin juntar todo en un solo String).</p>
+                                <pre><code class="language-java">ProcessBuilder pb = new ProcessBuilder(java, "-cp", classpath, "FiltreLog", "ERROR");</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-blue-800">pb.start()</code>
+                                <p class="text-slate-600 mt-1">Arranca realmente el proceso en el Sistema Operativo y devuelve un objeto <code>Process</code> para controlarlo. Lanza <code>IOException</code>.</p>
+                                <pre><code class="language-java">Process p = pb.start();</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-blue-800">pb.redirectError(File file) / INHERIT</code>
+                                <p class="text-slate-600 mt-1">Envía todo lo que el hijo escriba en <code>System.err</code> directamente a un archivo físico o a la consola del padre.</p>
+                                <pre><code class="language-java">pb.redirectError(new File("errors_filtre.log")); // Guarda errores en disco
+// O bien: pb.redirectError(ProcessBuilder.Redirect.INHERIT); // Muestra en consola padre</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-blue-800">pb.redirectErrorStream(true)</code>
+                                <p class="text-slate-600 mt-1">Fusiona <code>stderr</code> dentro de <code>stdout</code>. Así el padre lee tanto la salida normal como los errores por un único <code>getInputStream()</code>.</p>
+                                <pre><code class="language-java">pb.redirectErrorStream(true);</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-blue-800">pb.directory(File dir)</code>
+                                <p class="text-slate-600 mt-1">Cambia la carpeta donde se ejecutará el proceso hijo (útil si el hijo busca ficheros con rutas relativas).</p>
+                                <pre><code class="language-java">pb.directory(new File("src/datos"));</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Process & Streams methods -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <span class="font-bold text-indigo-700 text-lg">Clase Process y Flujos</span>
+                            <span class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-semibold">Ejecución e IPC</span>
+                        </div>
+
+                        <div class="space-y-3 text-sm">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-indigo-800">p.getOutputStream()</code>
+                                <p class="text-slate-600 mt-1">Devuelve el flujo de salida hacia el hijo (conectado a su <code>System.in</code>). Se envuelve en <code>OutputStreamWriter</code> y <code>BufferedWriter</code>.</p>
+                                <pre><code class="language-java">BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
+bw.write("Hola hijo"); bw.newLine(); bw.flush();</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-indigo-800">p.getInputStream()</code>
+                                <p class="text-slate-600 mt-1">Devuelve el flujo de entrada desde el hijo (conectado a su <code>System.out</code>). Se envuelve en <code>InputStreamReader</code> y <code>BufferedReader</code>.</p>
+                                <pre><code class="language-java">BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+String respuesta = br.readLine();</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-indigo-800">p.waitFor()</code>
+                                <p class="text-slate-600 mt-1">Bloquea al Padre hasta que el proceso hijo finalice por completo. Devuelve el código de salida (<code>exitCode</code>). Lanza <code>InterruptedException</code>.</p>
+                                <pre><code class="language-java">int exitCode = p.waitFor(); // Espera y recoge 0 (OK) o != 0 (Error)</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-indigo-800">p.exitValue()</code>
+                                <p class="text-slate-600 mt-1">Devuelve el código de salida del hijo <strong>sin esperar</strong>. Si el hijo sigue vivo, lanza <code>IllegalThreadStateException</code>. Úsalo siempre después de <code>waitFor()</code>.</p>
+                                <pre><code class="language-java">p.waitFor();
+if (p.exitValue() == 0) { System.out.println("Todo correcto"); }</code></pre>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <code class="font-bold text-indigo-800">p.destroy() / System.exit(int)</code>
+                                <p class="text-slate-600 mt-1"><code>p.destroy()</code> mata al hijo desde el padre. En el hijo, <code>System.exit(0)</code> indica éxito y <code>System.exit(1)</code> indica error.</p>
+                                <pre><code class="language-java">if (texto.isEmpty()) { System.err.println("Vacío"); System.exit(1); }</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 4: EJEMPLOS REALES COMPLETOS DE EXAMEN -->
+        <section id="ejemplos" class="mb-12 scroll-mt-24">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center">
+                <span class="bg-blue-100 text-blue-700 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-base font-bold">4</span>
+                Ejemplos Reales Completos (Patrones de Examen)
+            </h2>
+
+            <div class="space-y-6">
+                <!-- EJEMPLO 1: Conversación Interactiva por Turnos -->
+                <details class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden group" open>
+                    <summary class="cursor-pointer p-5 font-bold text-slate-800 bg-slate-50 hover:bg-blue-50 transition-colors flex justify-between items-center">
+                        <span>🎯 Patrón A: Conversación ida y vuelta por turnos (Concurso Matemático - Ej. 8)</span>
+                        <span class="text-blue-600 text-sm font-semibold">Ver / Ocultar</span>
+                    </summary>
+                    <div class="p-6 border-t border-slate-200">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5 text-sm text-slate-700">
+                            <strong>¿Cuándo sale este patrón?</strong> Cuando el Padre envía varias preguntas o líneas <strong>una a una</strong> y necesita leer la respuesta del hijo en cada iteración del bucle.<br>
+                            <strong>Clave técnica:</strong> Dentro del bucle <code>for</code>, el Padre hace <code>write()</code> + <code>newLine()</code> + <code>flush()</code> y justo después <code>readLine()</code>. El hijo usa <code>PrintWriter(..., true)</code> (con <em>autoFlush</em>) para que su respuesta salga inmediatamente sin quedarse atascada en el buffer.
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <div class="text-xs font-bold uppercase text-slate-500 mb-1">1. ConcursoHijo.java</div>
+                                <pre><code class="language-java">import java.io.*;
+
+public class ConcursoHijo {
+    public static void main(String[] args) throws IOException {
+        BufferedReader entrada = new BufferedReader(new InputStreamReader(System.in));
+        // autoFlush = true para que cada println() viaje al padre al instante
+        PrintWriter salida = new PrintWriter(new OutputStreamWriter(System.out), true);
+
+        String operacion;
+        // Lee línea a línea hasta que el Padre cierre el stream (null)
+        while ((operacion = entrada.readLine()) != null) {
+            if (operacion.contains("+")) {
+                String[] partes = operacion.split("\+");
+                int res = Integer.parseInt(partes[0]) + Integer.parseInt(partes[1]);
+                salida.println(res);
+            } else if (operacion.contains("*")) {
+                String[] partes = operacion.split("\*");
+                int res = Integer.parseInt(partes[0]) * Integer.parseInt(partes[1]);
+                salida.println(res);
+            }
+        }
+    }
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold uppercase text-slate-500 mb-1">2. ConcursoPadre.java</div>
+                                <pre><code class="language-java">import java.io.*;
+import java.nio.file.Paths;
+import java.util.Random;
+
+public class ConcursoPadre {
+    public static void main(String[] args) throws Exception {
+        String java = Paths.get(System.getProperty("java.home"), "bin", "java").toString();
+        String cp = System.getProperty("java.class.path");
+
+        ProcessBuilder pb = new ProcessBuilder(java, "-cp", cp, "ConcursoHijo");
+        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+        Process hijo = pb.start();
+
+        BufferedWriter salida = new BufferedWriter(new OutputStreamWriter(hijo.getOutputStream()));
+        BufferedReader entrada = new BufferedReader(new InputStreamReader(hijo.getInputStream()));
+
+        Random rand = new Random();
+        int aciertos = 0;
+
+        for (int i = 1; i <= 5; i++) {
+            int a = rand.nextInt(9) + 1;
+            int b = rand.nextInt(9) + 1;
+            String op = a + "+" + b;
+
+            // 1. Padre -> Hijo
+            salida.write(op);
+            salida.newLine();
+            salida.flush(); // Obligatorio para empujar el dato en cada vuelta
+
+            // 2. Hijo -> Padre
+            int respHijo = Integer.parseInt(entrada.readLine());
+            if (respHijo == (a + b)) aciertos++;
+        }
+
+        // 3. Cerrar streams FUERA del bucle para que el hijo salga de su while
+        salida.close();
+        entrada.close();
+        hijo.waitFor();
+
+        System.out.println("Aciertos: " + aciertos + "/5");
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- EJEMPLO 2: Pipeline Paralelo + Redirección + Exit Codes -->
+                <details class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden group">
+                    <summary class="cursor-pointer p-5 font-bold text-slate-800 bg-slate-50 hover:bg-blue-50 transition-colors flex justify-between items-center">
+                        <span>🚀 Patrón B: Pipeline Paralelo con 2 Hijos, Argumentos y Control de Errores (Práctica LogAnalyzer)</span>
+                        <span class="text-blue-600 text-sm font-semibold">Ver / Ocultar</span>
+                    </summary>
+                    <div class="p-6 border-t border-slate-200">
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-5 text-sm text-slate-700">
+                            <strong>¿Cuándo sale este patrón?</strong> En ejercicios de nivel completo donde el Padre lanza varios procesos hijos en paralelo pasándoles parámetros por <code>args[0]</code>, redirige errores a un fichero y verifica los <code>exitValue()</code>.<br>
+                            <strong>Clave técnica:</strong> Se arrancan ambos hijos con <code>.start()</code>, se les envía el bloque de texto y se cierra su <code>BufferedWriter</code> (try-with-resources) <strong>antes</strong> de leer sus respuestas y llamar a <code>waitFor()</code>.
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <div class="text-xs font-bold uppercase text-slate-500 mb-1">1. FiltreLog.java (Proceso Hijo)</div>
+                                <pre><code class="language-java">import java.io.*;
+
+public class FiltreLog {
+    public static void main(String[] args) throws IOException {
+        // 1. Recibe la palabra a buscar por argumento (por defecto "ERROR")
+        String palabra = (args.length > 0) ? args[0] : "ERROR";
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int contador = 0;
+        boolean tieneContenido = false;
+        String linea;
+
+        while ((linea = br.readLine()) != null) {
+            if (!linea.trim().isEmpty()) tieneContenido = true;
+            if (linea.contains(palabra)) {
+                contador++;
+            }
+        }
+
+        // 2. Si el texto estaba vacío, reporta por stderr y sale con código 1
+        if (!tieneContenido) {
+            System.err.println("Error: Texto vacío recibido.");
+            System.exit(1);
+        }
+
+        // 3. Imprime resultado por stdout y sale con código 0
+        System.out.println(contador);
+        System.exit(0);
+    }
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold uppercase text-slate-500 mb-1">2. AnalitzadorPrincipal.java (Proceso Padre)</div>
+                                <pre><code class="language-java">import java.io.*;
+import java.nio.file.Paths;
+
+public class AnalitzadorPrincipal {
+    public static void main(String[] args) throws Exception {
+        String logs = "2026-09-30 INFO Inicio\n" +
+                      "2026-09-30 ERROR Fallo disco\n" +
+                      "2026-09-30 WARNING Memoria alta\n" +
+                      "2026-09-30 ERROR Timeout\n";
+
+        String java = Paths.get(System.getProperty("java.home"), "bin", "java").toString();
+        String cp = System.getProperty("java.class.path");
+
+        // Configuramos dos hijos con distintos args[0]
+        ProcessBuilder pbErr = new ProcessBuilder(java, "-cp", cp, "FiltreLog", "ERROR");
+        ProcessBuilder pbWarn = new ProcessBuilder(java, "-cp", cp, "FiltreLog", "WARNING");
+
+        // Redirigimos stderr a fichero físico
+        pbErr.redirectError(new File("errors_filtre.log"));
+        pbWarn.redirectError(new File("errors_filtre.log"));
+
+        // 1. Arrancamos ambos procesos en paralelo
+        Process hErr = pbErr.start();
+        Process hWarn = pbWarn.start();
+
+        // 2. Enviamos datos y cerramos flujos (try-with-resources hace close() solo)
+        try (BufferedWriter outErr = new BufferedWriter(new OutputStreamWriter(hErr.getOutputStream()));
+             BufferedWriter outWarn = new BufferedWriter(new OutputStreamWriter(hWarn.getOutputStream()))) {
+            outErr.write(logs);
+            outErr.flush();
+            outWarn.write(logs);
+            outWarn.flush();
+        }
+
+        // 3. Leemos resultados
+        String resErr, resWarn;
+        try (BufferedReader inErr = new BufferedReader(new InputStreamReader(hErr.getInputStream()));
+             BufferedReader inWarn = new BufferedReader(new InputStreamReader(hWarn.getInputStream()))) {
+            resErr = inErr.readLine();
+            resWarn = inWarn.readLine();
+        }
+
+        // 4. Esperamos finalización y comprobamos exitValue()
+        hErr.waitFor();
+        hWarn.waitFor();
+        int exitFinal = (hErr.exitValue() == 0 && hWarn.exitValue() == 0) ? 0 : 1;
+
+        System.out.println("RESULTAT: ERRORS=" + resErr + " | WARNINGS=" + resWarn + " | EXIT_CODE=" + exitFinal);
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- CHECKLIST FINAL DE SUPERVIVENCIA EN EL EXAMEN -->
+        <section class="bg-amber-50 border border-amber-200 rounded-2xl p-6 md:p-8">
+            <h3 class="text-lg font-bold text-amber-900 mb-3 flex items-center">
+                ⚠️ Checklist Anti-Bloqueos antes de entregar tu código del Tema 1
+            </h3>
+            <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-amber-950">
+                <li class="flex items-start"><span class="mr-2 font-bold">1.</span> ¿Pusiste <code>bw.newLine()</code> y <code>bw.flush()</code> después de cada <code>bw.write()</code>? Sin salto de línea, el <code>readLine()</code> del hijo se queda esperando eternamente.</li>
+                <li class="flex items-start"><span class="mr-2 font-bold">2.</span> ¿Cerraste el <code>OutputStream</code> del padre (<code>close()</code>) antes de esperar la respuesta final cuando el hijo lee con <code>while ((l = br.readLine()) != null)</code>?</li>
+                <li class="flex items-start"><span class="mr-2 font-bold">3.</span> ¿Leíste <code>getInputStream()</code> <strong>antes</strong> de llamar a <code>waitFor()</code>? Si el hijo imprime mucho texto y llamas antes a <code>waitFor()</code>, llenarás el buffer y bloquearás ambos procesos.</li>
+                <li class="flex items-start"><span class="mr-2 font-bold">4.</span> ¿Cerraste los streams <strong>fuera</strong> de los bucles? Cerrarlos dentro provoca <code>IOException: Stream closed</code> en la segunda vuelta.</li>
+            </ul>
+        </section>
+
+        <!-- Botón Siguiente Tema -->
+        <div class="mt-10 flex justify-end">
+            <a href="tema2.html" class="inline-flex items-center px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-all">
+                Ir al Tema 2: Programación Multihilo y Sincronización →
+            </a>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-slate-500 text-sm">
+        Cuaderno de Estudio PSP · Guarda <code>tema1.html</code> y <code>tema2.html</code> en la misma carpeta para navegar entre ellos.
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+</body>
+</html>
